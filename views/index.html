@@ -48,6 +48,16 @@
         />
         <input type="submit" value="Submit" />
       </form>
+      <form action="/api/users" method="get">
+        <p><code>GET /api/users</code></p>
+        <input type="submit" value="Get all users" />
+      </form>
+      <form action="/api/users/:_id/logs" id="logs-form" method="post">
+        <h2>GET user's exercise log</h2>
+        <p><code>GET /api/users/:_id/logs</code></p>
+        <input id="userID" type="text" name=":_id" placeholder=":_id" />
+        <input type="submit" value="Submit" />
+      </form>
       <p>
         <strong>GET user's exercise log: </strong>
         <code>GET /api/users/:_id/logs?[from][&amp;to][&amp;limit]</code>
@@ -58,6 +68,24 @@
         number
       </p>
     </div>
-    <script src="../scripts/script.js"></script>
+    <script>
+      const exerciseForm = document.getElementById("exercise-form");
+
+      exerciseForm.addEventListener("submit", () => {
+        const userId = document.getElementById("uid").value;
+        exerciseForm.action = `/api/users/${userId}/exercises`;
+
+        exerciseForm.submit();
+      });
+
+      const logsForm = document.getElementById("logs-form");
+
+      logsForm.addEventListener("submit", () => {
+        const userId = document.getElementById("userID").value;
+        logsForm.action = `/api/users/${userId}/logs`;
+
+        logsForm.submit();
+      });
+    </script>
   </body>
 </html>
