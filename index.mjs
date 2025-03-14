@@ -6,15 +6,20 @@ import bodyParser from "body-parser";
 
 import {
   getAllUsersFromDB,
-  getUserByIdFromDB,
   addNewUserToDB,
-  getExerciseByIdFromDB,
   getExercisesByUserIdFromDB,
   addNewExerciseToDB,
 } from "./db-handlers.mjs";
-import { sendServerError, sendError, trimInputValues } from "./utils.mjs";
-
-import { __dirname, ERROR_CODES } from "./constants.mjs";
+import {
+  sendServerError,
+  sendError,
+  isNoUsersError,
+  getUserID,
+  isUserIDError,
+  isValidDate,
+  getFormattedCurrentDate,
+} from "./utils.mjs";
+import { __dirname, ERROR_CODES, ERROR_MESSAGES } from "./constants.mjs";
 
 dotenv.config();
 const app = express();
@@ -56,14 +61,7 @@ app.get("/api/users", async (req, res) => {
   try {
     const users = await getAllUsersFromDB();
 
-    if (!users || !users.length) {
-      sendError(
-        res,
-        ERROR_CODES.NOT_FOUND,
-        "No users in the DB. Please go ahead and add any."
-      );
-      return;
-    }
+    if (isNoUsersError(res, users)) return;
 
     res.json(users);
   } catch (e) {
@@ -74,22 +72,17 @@ app.get("/api/users", async (req, res) => {
 app.post("/api/users", async (req, res) => {
   try {
     let { username } = req.body;
-
-    trimInputValues(username);
+    username = username.trim();
 
     if (!username) {
-      sendError(res, ERROR_CODES.BAD_REQUEST, "Username is required.");
+      sendError(res, ERROR_CODES.BAD_REQUEST, ERROR_MESSAGES.NO_USERNAME);
       return;
     }
 
     const users = await getAllUsersFromDB();
 
     if (users.some((user) => user?.username === username)) {
-      sendError(
-        res,
-        ERROR_CODES.CONFLICT,
-        "Username already exists. You are not as creative as you thought :D"
-      );
+      sendError(res, ERROR_CODES.CONFLICT, ERROR_MESSAGES.USERNAME_EXISTS);
       return;
     }
 
@@ -102,42 +95,69 @@ app.post("/api/users", async (req, res) => {
 
 app.post("/api/users/:_id/exercises", async (req, res) => {
   try {
-    const userIDKey = Object.keys(req.body)[0];
-    const userID = +req.body[userIDKey];
+    const userID = getUserID(req.body);
     let { description, duration, date } = req.body;
+    description = description.trim();
+    duration = duration.trim();
+    date = date.trim();
 
-    trimInputValues(description, duration, date);
+    if (isUserIDError(res, userID)) return;
 
-    if (!userID) {
-      sendError(res, ERROR_CODES.BAD_REQUEST, "Username value is missing.");
+    if (!description || !duration) {
+      const missing = [];
+      !description && missing.push("description");
+      !duration && missing.push("duration");
+
+      const missingHint = ` (Missing: ${missing.join(", ")})`;
+
+      sendError(
+        res,
+        ERROR_CODES.BAD_REQUEST,
+        ERROR_MESSAGES.MISSING_REQUIRED + missingHint
+      );
       return;
     }
 
-    if (!description || !duration) {
-      sendError(res, ERROR_CODES.BAD_REQUEST, "Required values are missing.");
+    if (Number.isNaN(+duration)) {
+      sendError(
+        res,
+        ERROR_CODES.BAD_REQUEST,
+        "Duration" + ERROR_MESSAGES.NOT_VALID_INTEGER
+      );
       return;
+    }
+
+    let actualDate = null;
+
+    if (date) {
+      if (isValidDate(date)) {
+        actualDate = date;
+      } else {
+        sendError(
+          res,
+          ERROR_CODES.BAD_REQUEST,
+          ERROR_MESSAGES.NON_VALID_DATE_FORMAT
+        );
+        return;
+      }
+    } else {
+      actualDate = getFormattedCurrentDate();
     }
 
     const users = await getAllUsersFromDB();
 
-    if (!users || !users.length) {
-      sendError(res, ERROR_CODES.NOT_FOUND, "No users in the DB.");
-      return;
-    }
+    if (isNoUsersError(res, users)) return;
+
     if (!users.some((user) => user.id === userID)) {
-      sendError(
-        res,
-        ERROR_CODES.NOT_FOUND,
-        "No user with such an ID... Who stole him?.."
-      );
+      sendError(res, ERROR_CODES.NOT_FOUND, ERROR_MESSAGES.NO_USER);
       return;
     }
 
     const result = await addNewExerciseToDB({
       userID: userID,
-      description: req.body.description,
-      duration: +req.body.duration,
-      date: new Date(),
+      description: description,
+      duration: duration,
+      date: actualDate,
     });
 
     res.send(result);
@@ -148,30 +168,25 @@ app.post("/api/users/:_id/exercises", async (req, res) => {
 
 app.post("/api/users/:_id/logs", async (req, res) => {
   try {
-    const userIDKey = Object.keys(req.body)[0];
-    let userID = +req.body[userIDKey];
+    const userID = getUserID(req.body);
 
-    if (!userID) {
-      sendError(res, ERROR_CODES.BAD_REQUEST, "UserID is required.");
-      return;
-    }
+    if (isUserIDError(res, userID)) return;
 
     const users = await getAllUsersFromDB();
-    const targetUser = users.find((user) => user.id === +userID);
+
+    if (isNoUsersError(res, users)) return;
+
+    const targetUser = users.find((user) => user.id === userID);
 
     if (!targetUser) {
-      sendError(res, ERROR_CODES.NOT_FOUND, "No such an user in the DB.");
+      sendError(res, ERROR_CODES.NOT_FOUND, ERROR_MESSAGES.NO_USER);
       return;
     }
 
     const exercises = await getExercisesByUserIdFromDB(targetUser.id);
 
     if (!exercises || !exercises.length) {
-      sendError(
-        res,
-        ERROR_CODES.NOT_FOUND,
-        "This user has no active exercises."
-      );
+      sendError(res, ERROR_CODES.NOT_FOUND, ERROR_MESSAGES.NO_EXERCISES);
       return;
     }
 
