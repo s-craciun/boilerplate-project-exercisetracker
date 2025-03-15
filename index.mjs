@@ -1,4 +1,4 @@
-import express, { static as _static } from "express";
+import express, { static as _static, query } from "express";
 import { Database } from "sqlite-async";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -183,11 +183,67 @@ app.post("/api/users/:_id/logs", async (req, res) => {
       return;
     }
 
-    const exercises = await getExercisesByUserIdFromDB(targetUser.id);
+    let exercises = await getExercisesByUserIdFromDB(targetUser.id);
 
     if (!exercises || !exercises.length) {
       sendError(res, ERROR_CODES.NOT_FOUND, ERROR_MESSAGES.NO_EXERCISES);
       return;
+    }
+
+    exercises.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const { from, to, limit } = req.query;
+
+    if (from) {
+      if (isValidDate(from)) {
+        exercises = exercises.filter(
+          (ex) => ex.date && new Date(ex.date) >= new Date(from)
+        );
+      } else {
+        sendError(
+          res,
+          ERROR_CODES.BAD_REQUEST,
+          ERROR_MESSAGES.NON_VALID_DATE_FORMAT
+        );
+        return;
+      }
+    }
+
+    if (to) {
+      if (isValidDate(to)) {
+        exercises = exercises.filter(
+          (ex) => ex.date && new Date(ex.date) <= new Date(to)
+        );
+      } else {
+        sendError(
+          res,
+          ERROR_CODES.BAD_REQUEST,
+          ERROR_MESSAGES.NON_VALID_DATE_FORMAT
+        );
+        return;
+      }
+    }
+
+    if (!exercises || !exercises.length) {
+      sendError(
+        res,
+        ERROR_CODES.NOT_FOUND,
+        ERROR_MESSAGES.NO_EXERCISES_FOR_PERIOD
+      );
+      return;
+    }
+
+    if (limit) {
+      if (!Number.isNaN(limit)) {
+        exercises = exercises.slice(0, limit);
+      } else {
+        sendError(
+          res,
+          ERROR_CODES.BAD_REQUEST,
+          "Limit" + ERROR_MESSAGES.NOT_VALID_INTEGER
+        );
+        return;
+      }
     }
 
     const responseBody = {

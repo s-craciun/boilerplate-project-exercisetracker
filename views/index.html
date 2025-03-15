@@ -49,6 +49,7 @@
         <input type="submit" value="Submit" />
       </form>
       <form action="/api/users" method="get">
+        <h2>GET all users</h2>
         <p><code>GET /api/users</code></p>
         <input type="submit" value="Get all users" />
       </form>
@@ -56,6 +57,14 @@
         <h2>GET user's exercise log</h2>
         <p><code>GET /api/users/:_id/logs</code></p>
         <input id="userID" type="text" name=":_id" placeholder=":_id" />
+        <input
+          id="from"
+          type="text"
+          name="from"
+          placeholder="from (yyyy-mm-dd)"
+        />
+        <input id="to" type="text" name="to" placeholder="to (yyyy-mm-dd)" />
+        <input id="limit" type="text" name="limit" placeholder="limit (int)" />
         <input type="submit" value="Submit" />
       </form>
       <p>
@@ -82,7 +91,28 @@
 
       logsForm.addEventListener("submit", () => {
         const userId = document.getElementById("userID").value;
-        logsForm.action = `/api/users/${userId}/logs`;
+        const from = document.getElementById("from").value;
+        const to = document.getElementById("to").value;
+        const limit = document.getElementById("limit").value;
+        const params = {};
+
+        if (from) {
+          params.from = from;
+        }
+
+        if (to) {
+          params.to = to;
+        }
+
+        if (limit) {
+          params.limit = limit;
+        }
+
+        const queryParams = new URLSearchParams(params).toString();
+
+        logsForm.action = `/api/users/${userId}/logs${
+          queryParams ? "?" + queryParams : ""
+        }`;
 
         logsForm.submit();
       });

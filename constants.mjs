@@ -20,6 +20,7 @@ export const ERROR_MESSAGES = {
   USERNAME_EXISTS: "Username already exists.",
 
   NO_EXERCISES: "This user has no active exercises.",
+  NO_EXERCISES_FOR_PERIOD: "This user has no active exercises for this period.",
 
   NOT_VALID_INTEGER: " is not valid. An integer value is expected.",
   MISSING_REQUIRED: "Required values are missing.",
