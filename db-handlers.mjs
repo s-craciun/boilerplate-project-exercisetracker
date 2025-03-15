@@ -51,7 +51,7 @@ async function getExerciseByIdFromDB(exerciseId) {
 
 async function getExercisesByUserIdFromDB(userId) {
   return await db.all(
-    "SELECT * FROM exercises WHERE userID = ?",
+    "SELECT * FROM exercises WHERE userID = ? ORDER BY date ASC",
     [userId],
     function (err, rows) {
       if (err) {

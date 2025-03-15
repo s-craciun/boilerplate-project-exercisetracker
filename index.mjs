@@ -190,8 +190,6 @@ app.post("/api/users/:_id/logs", async (req, res) => {
       return;
     }
 
-    exercises.sort((a, b) => new Date(a.date) - new Date(b.date));
-
     const { from, to, limit } = req.query;
 
     if (from) {
