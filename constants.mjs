@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
+export const APP_BASE_URL = "/api/users";
+
 export const ERROR_CODES = {
   BAD_REQUEST: 400,
   NOT_FOUND: 404,
@@ -22,8 +24,7 @@ export const ERROR_MESSAGES = {
   NO_EXERCISES: "This user has no active exercises.",
   NO_EXERCISES_FOR_PERIOD: "This user has no active exercises for this period.",
 
-  NOT_VALID_INTEGER: " is not valid. An integer value is expected.",
+  NOT_VALID_INTEGER: " is not valid. A positive integer value is expected.",
   MISSING_REQUIRED: "Required values are missing.",
-  NON_VALID_DATE_FORMAT:
-    "The date format is not valid. A 'yyyy-mm-dd' format is expected where (y)(m) and (d) are integers.",
+  NON_VALID_DATE_FORMAT: "Date should be yyyy-mm-dd format.",
 };

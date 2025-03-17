@@ -49,18 +49,39 @@ async function getExerciseByIdFromDB(exerciseId) {
   );
 }
 
-async function getExercisesByUserIdFromDB(userId) {
-  return await db.all(
-    "SELECT * FROM exercises WHERE userID = ? ORDER BY date ASC",
-    [userId],
-    function (err, rows) {
-      if (err) {
-        return err;
-      }
+async function getExercisesByUserIdAndQueriesFromDB(userId, queries) {
+  let sql = "SELECT * FROM exercises WHERE userID = ?";
+  const queryParams = [];
 
-      return rows;
+  if (queries.from && !queries.to) {
+    queryParams.push(queries.from);
+    sql += " AND date >= ?";
+  }
+
+  if (queries.to && !queries.from) {
+    queryParams.push(queries.to);
+    sql += " AND date <= ?";
+  }
+
+  if (queries.to && queries.from) {
+    queryParams.push(queries.from, queries.to);
+    sql += " AND date BETWEEN ? AND ?";
+  }
+
+  sql += " ORDER BY date ASC";
+
+  if (queries.limit) {
+    queryParams.push(queries.limit);
+    sql += " LIMIT ?";
+  }
+
+  return await db.all(sql, [userId, ...queryParams], function (err, rows) {
+    if (err) {
+      return err;
     }
-  );
+
+    return rows;
+  });
 }
 
 async function addNewExerciseToDB(exercise) {
@@ -85,6 +106,6 @@ export {
   getUserByIdFromDB,
   addNewUserToDB,
   getExerciseByIdFromDB,
-  getExercisesByUserIdFromDB,
+  getExercisesByUserIdAndQueriesFromDB,
   addNewExerciseToDB,
 };
