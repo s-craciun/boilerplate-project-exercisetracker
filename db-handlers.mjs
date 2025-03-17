@@ -70,7 +70,7 @@ async function getExercisesByUserIdAndQueriesFromDB(userId, queries) {
 
   sql += " ORDER BY date ASC";
 
-  const count = await db.get(
+  const { count } = await db.get(
     "SELECT COUNT(*) AS count " + sql,
     [...queryParams],
     (err, count) => {
