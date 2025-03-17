@@ -53,7 +53,7 @@
         <p><code>GET /api/users</code></p>
         <input type="submit" value="Get all users" />
       </form>
-      <form action="/api/users/:_id/logs" id="logs-form" method="get">
+      <form id="logs-form" method="get">
         <h2>GET user's exercise log</h2>
         <p><code>GET /api/users/:_id/logs</code></p>
         <input id="userID" type="text" name=":_id" placeholder=":_id" />
@@ -65,7 +65,7 @@
         />
         <input id="to" type="text" name="to" placeholder="to (yyyy-mm-dd)" />
         <input id="limit" type="text" name="limit" placeholder="limit (int)" />
-        <input type="submit" value="Submit" />
+        <input id="logs-submit-btn" type="button" value="Submit" />
       </form>
       <p>
         <strong>GET user's exercise log: </strong>
@@ -88,33 +88,35 @@
       });
 
       const logsForm = document.getElementById("logs-form");
+      const logsSubmitBtn = document.getElementById("logs-submit-btn");
 
-      logsForm.addEventListener("submit", () => {
+      logsSubmitBtn.addEventListener("click", () => {
         const userId = document.getElementById("userID").value;
-        const from = document.getElementById("from").value;
-        const to = document.getElementById("to").value;
-        const limit = document.getElementById("limit").value;
-        const params = {};
+        const from = document.getElementById("from").value.trim();
+        const to = document.getElementById("to").value.trim();
+        const limit = document.getElementById("limit").value.trim();
+        const queryParams = new URLSearchParams();
 
-        if (from) {
-          params.from = from;
+        if (from !== "") {
+          queryParams.append("from", from);
         }
 
-        if (to) {
-          params.to = to;
+        if (to !== "") {
+          queryParams.append("to", to);
         }
 
-        if (limit) {
-          params.limit = limit;
+        if (limit !== "") {
+          queryParams.append("limit", limit);
         }
 
-        const queryParams = new URLSearchParams(params).toString();
-
-        logsForm.action = `/api/users/${userId}/logs${
-          queryParams ? "?" + queryParams : ""
+        const queryParamKeys = Object.keys(queryParams);
+        const url = `/api/users/${userId}/logs${
+          queryParamKeys ? "?" + queryParams.toString() : ""
         }`;
+        logsForm.action = url;
 
         logsForm.submit();
+        window.location.href = url;
       });
     </script>
   </body>

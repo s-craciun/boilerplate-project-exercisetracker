@@ -13,7 +13,7 @@ import {
 
 router.get("/:_id/logs", async (req, res) => {
   try {
-    const userID = getUserID(req.query);
+    const userID = getUserID(req.params);
 
     if (isUserIDError(res, userID)) return;
 
