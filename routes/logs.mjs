@@ -66,7 +66,7 @@ router.get("/:_id/logs", async (req, res) => {
       }
     }
 
-    const exercises = await getExercisesByUserIdAndQueriesFromDB(
+    const { count, exercises } = await getExercisesByUserIdAndQueriesFromDB(
       targetUser.id,
       queries
     );
@@ -88,7 +88,7 @@ router.get("/:_id/logs", async (req, res) => {
     const responseBody = {
       ...targetUser,
       logs: exercises,
-      count: exercises.length,
+      count: count,
     };
 
     res.send(responseBody);

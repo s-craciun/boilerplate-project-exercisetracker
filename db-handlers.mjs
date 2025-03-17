@@ -50,8 +50,8 @@ async function getExerciseByIdFromDB(exerciseId) {
 }
 
 async function getExercisesByUserIdAndQueriesFromDB(userId, queries) {
-  let sql = "SELECT * FROM exercises WHERE userID = ?";
-  const queryParams = [];
+  let sql = " FROM exercises WHERE userID = ?";
+  const queryParams = [userId];
 
   if (queries.from && !queries.to) {
     queryParams.push(queries.from);
@@ -70,18 +70,39 @@ async function getExercisesByUserIdAndQueriesFromDB(userId, queries) {
 
   sql += " ORDER BY date ASC";
 
+  const count = await db.get(
+    "SELECT COUNT(*) AS count " + sql,
+    [...queryParams],
+    (err, count) => {
+      if (err) {
+        return err;
+      }
+
+      return count;
+    }
+  );
+
   if (queries.limit) {
     queryParams.push(queries.limit);
     sql += " LIMIT ?";
   }
 
-  return await db.all(sql, [userId, ...queryParams], function (err, rows) {
-    if (err) {
-      return err;
-    }
+  const exercises = await db.all(
+    "SELECT * " + sql,
+    [...queryParams],
+    function (err, rows) {
+      if (err) {
+        return err;
+      }
 
-    return rows;
-  });
+      return rows;
+    }
+  );
+
+  return {
+    count,
+    exercises,
+  };
 }
 
 async function addNewExerciseToDB(exercise) {
